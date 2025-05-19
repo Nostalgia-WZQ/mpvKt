@@ -1,6 +1,5 @@
 package live.mehiz.mpvkt.ui.home
 
-import android.net.Uri
 import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -40,11 +39,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
+import androidx.core.net.toUri
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.AbstractFile
 import `is`.xyz.mpv.Utils
+import kotlinx.serialization.Serializable
 import live.mehiz.mpvkt.R
 import live.mehiz.mpvkt.presentation.Screen
 import live.mehiz.mpvkt.ui.player.audioExtensions
@@ -52,6 +51,7 @@ import live.mehiz.mpvkt.ui.player.imageExtensions
 import live.mehiz.mpvkt.ui.player.videoExtensions
 import live.mehiz.mpvkt.ui.theme.spacing
 import live.mehiz.mpvkt.ui.utils.FilesComparator
+import live.mehiz.mpvkt.ui.utils.LocalNavController
 import org.koin.compose.koinInject
 import java.lang.Long.signum
 import java.text.StringCharacterIterator
@@ -60,12 +60,13 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlin.math.abs
 
-data class FilePickerScreen(val uri: String) : Screen() {
+@Serializable
+data class FilePickerScreen(val uri: String) : Screen {
 
   @OptIn(ExperimentalMaterial3Api::class)
   @Composable
   override fun Content() {
-    val navigator = LocalNavigator.currentOrThrow
+    val navigator = LocalNavController.current
     val fileManager = koinInject<FileManager>()
     val context = LocalContext.current
     Scaffold(
@@ -73,7 +74,12 @@ data class FilePickerScreen(val uri: String) : Screen() {
         TopAppBar(
           title = { Text(text = stringResource(id = R.string.home_pick_file)) },
           navigationIcon = {
-            IconButton(onClick = { navigator.replaceAll(HomeScreen) }) {
+            IconButton(
+              onClick = {
+                navigator.navigate(HomeScreen)
+                navigator.clearBackStack<HomeScreen>()
+              },
+            ) {
               Icon(Icons.AutoMirrored.Default.ArrowBack, null)
             }
           },
@@ -81,13 +87,13 @@ data class FilePickerScreen(val uri: String) : Screen() {
       },
     ) { paddingValues ->
       FilePicker(
-        directory = fileManager.fromUri(Uri.parse(uri))!!,
+        directory = fileManager.fromUri(uri.toUri())!!,
         onNavigate = { newFile ->
           if (fileManager.isFile(newFile)) {
             HomeScreen.playFile(newFile.getFullPath(), context)
             return@FilePicker
           }
-          navigator.push(FilePickerScreen(newFile.getFullPath()))
+          navigator.navigate(FilePickerScreen(newFile.getFullPath()))
         },
         modifier = Modifier
           .fillMaxSize()
@@ -102,7 +108,7 @@ data class FilePickerScreen(val uri: String) : Screen() {
     modifier: Modifier = Modifier,
     onNavigate: (AbstractFile) -> Unit,
   ) {
-    val navigator = LocalNavigator.currentOrThrow
+    val navigator = LocalNavController.current
     val fileManager = koinInject<FileManager>()
     val fileList = fileManager.listFiles(directory).filterNot {
       !Utils.MEDIA_EXTENSIONS.contains(fileManager.getName(it).substringAfterLast('.')) &&
@@ -116,7 +122,7 @@ data class FilePickerScreen(val uri: String) : Screen() {
           isDirectory = true,
           lastModified = null,
           length = 0L,
-          onClick = { navigator.pop() },
+          onClick = { navigator.popBackStack() },
           modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainerLow),
         )
       }
@@ -197,7 +203,7 @@ data class FilePickerScreen(val uri: String) : Screen() {
                 pluralStringResource(
                   id = R.plurals.plural_items,
                   count = items!!,
-                  items
+                  items,
                 )
               } else {
                 size!!

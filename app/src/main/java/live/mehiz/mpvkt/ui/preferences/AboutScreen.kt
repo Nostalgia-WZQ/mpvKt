@@ -1,7 +1,6 @@
 package live.mehiz.mpvkt.ui.preferences
 
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -30,32 +29,34 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
+import androidx.core.net.toUri
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import compose.icons.SimpleIcons
 import compose.icons.simpleicons.Github
+import kotlinx.serialization.Serializable
 import live.mehiz.mpvkt.BuildConfig
 import live.mehiz.mpvkt.R
 import live.mehiz.mpvkt.presentation.Screen
 import live.mehiz.mpvkt.presentation.crash.CrashActivity.Companion.collectDeviceInfo
 import live.mehiz.mpvkt.ui.theme.spacing
+import live.mehiz.mpvkt.ui.utils.LocalNavController
 import me.zhanghai.compose.preference.Preference
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
 
-object AboutScreen : Screen() {
+@Serializable
+object AboutScreen : Screen {
   @OptIn(ExperimentalMaterial3Api::class)
   @Composable
   override fun Content() {
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
-    val navigator = LocalNavigator.currentOrThrow
+    val navigator = LocalNavController.current
     Scaffold(
       topBar = {
         TopAppBar(
           title = { Text(text = stringResource(id = R.string.pref_about_title)) },
           navigationIcon = {
-            IconButton(onClick = { navigator.pop() }) {
+            IconButton(onClick = navigator::popBackStack) {
               Icon(imageVector = Icons.AutoMirrored.Default.ArrowBack, contentDescription = null)
             }
           },
@@ -102,7 +103,7 @@ object AboutScreen : Screen() {
           )
           Preference(
             title = { Text(text = stringResource(id = R.string.pref_about_oss_libraries)) },
-            onClick = { navigator.push(LibrariesScreen) },
+            onClick = { navigator.navigate(LibrariesScreen) },
           )
           Preference(
             title = { Text(text = stringResource(id = R.string.pref_about_privacy_policy)) },
@@ -110,7 +111,7 @@ object AboutScreen : Screen() {
               context.startActivity(
                 Intent(
                   Intent.ACTION_VIEW,
-                  Uri.parse(context.getString(R.string.privacy_policy_url)),
+                  context.getString(R.string.privacy_policy_url).toUri(),
                 ),
               )
             },
@@ -123,7 +124,7 @@ object AboutScreen : Screen() {
           IconButton(
             onClick = {
               context.startActivity(
-                Intent(Intent.ACTION_VIEW, Uri.parse(context.getString(R.string.github_repo_url))),
+                Intent(Intent.ACTION_VIEW, context.getString(R.string.github_repo_url).toUri()),
               )
             },
           ) {
@@ -135,17 +136,18 @@ object AboutScreen : Screen() {
   }
 }
 
-object LibrariesScreen : Screen() {
+@Serializable
+object LibrariesScreen : Screen {
   @OptIn(ExperimentalMaterial3Api::class)
   @Composable
   override fun Content() {
-    val navigator = LocalNavigator.currentOrThrow
+    val navigator = LocalNavController.current
     Scaffold(
       topBar = {
         TopAppBar(
           title = { Text(text = stringResource(R.string.pref_about_oss_libraries)) },
           navigationIcon = {
-            IconButton(onClick = navigator::pop) {
+            IconButton(onClick = navigator::popBackStack) {
               Icon(imageVector = Icons.AutoMirrored.Default.ArrowBack, contentDescription = null)
             }
           },

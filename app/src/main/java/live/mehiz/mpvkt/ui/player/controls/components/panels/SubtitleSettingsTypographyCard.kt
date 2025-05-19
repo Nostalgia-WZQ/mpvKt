@@ -1,7 +1,6 @@
 package live.mehiz.mpvkt.ui.player.controls.components.panels
 
 import android.annotation.SuppressLint
-import android.net.Uri
 import androidx.annotation.StringRes
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -40,6 +39,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import com.github.k1rakishou.fsaf.FileManager
 import com.yubyf.truetypeparser.TTFFile
 import `is`.xyz.mpv.MPVLib
@@ -86,7 +86,7 @@ fun SubtitleSettingsTypographyCard(
     withContext(Dispatchers.IO) {
       fonts.addAll(
         fileManager.listFiles(
-          fileManager.fromUri(Uri.parse(preferences.fontsFolder.get())) ?: return@withContext,
+          fileManager.fromUri(preferences.fontsFolder.get().toUri()) ?: return@withContext,
         ).filter {
           fileManager.isFile(it) && fileManager.getName(it).lowercase().matches(".*\\.[ot]tf$".toRegex())
         }.mapNotNull {
@@ -127,17 +127,17 @@ fun SubtitleSettingsTypographyCard(
       }
       var borderStyle by remember {
         mutableStateOf(
-          SubtitlesBorderStyle.entries.first { it.value == MPVLib.getPropertyString("sub-border-style") }
+          SubtitlesBorderStyle.entries.first { it.value == MPVLib.getPropertyString("sub-border-style") },
         )
       }
       var borderSize by remember {
         mutableStateOf(
-          MPVLib.getPropertyInt("sub-border-size")
+          MPVLib.getPropertyInt("sub-border-size"),
         )
       }
       var shadowOffset by remember {
         mutableStateOf(
-          MPVLib.getPropertyInt("sub-shadow-offset")
+          MPVLib.getPropertyInt("sub-shadow-offset"),
         )
       }
       Row(
@@ -194,20 +194,23 @@ fun SubtitleSettingsTypographyCard(
           }
         }
         Spacer(Modifier.weight(1f))
-        TextButton(onClick = {
-          resetTypography(preferences)
-          isBold = MPVLib.getPropertyBoolean("sub-bold")
-          isItalic = MPVLib.getPropertyBoolean("sub-italic")
-          justify = SubtitleJustification.entries.first { it.value == MPVLib.getPropertyString("sub-justify") }
-          font = MPVLib.getPropertyString("sub-font")
-          fontSize = MPVLib.getPropertyInt("sub-font-size")
-          borderStyle = SubtitlesBorderStyle.entries.first { it.value == MPVLib.getPropertyString("sub-border-style") }
-          borderSize = MPVLib.getPropertyInt("sub-border-size")
-          shadowOffset = MPVLib.getPropertyInt("sub-shadow-offset")
-        }) {
+        TextButton(
+          onClick = {
+            resetTypography(preferences)
+            isBold = MPVLib.getPropertyBoolean("sub-bold")
+            isItalic = MPVLib.getPropertyBoolean("sub-italic")
+            justify = SubtitleJustification.entries.first { it.value == MPVLib.getPropertyString("sub-justify") }
+            font = MPVLib.getPropertyString("sub-font")
+            fontSize = MPVLib.getPropertyInt("sub-font-size")
+            borderStyle =
+              SubtitlesBorderStyle.entries.first { it.value == MPVLib.getPropertyString("sub-border-style") }
+            borderSize = MPVLib.getPropertyInt("sub-border-size")
+            shadowOffset = MPVLib.getPropertyInt("sub-shadow-offset")
+          },
+        ) {
           Row(
             horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.extraSmall),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
           ) {
             Icon(Icons.Default.FormatClear, null)
             Text(stringResource(R.string.generic_reset))
